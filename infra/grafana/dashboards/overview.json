@@ -1,0 +1,610 @@
+{
+  "title": "Observability Lab: all apps",
+  "uid": "obs-lab",
+  "schemaVersion": 39,
+  "version": 3,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "All apps: UP / DOWN",
+      "description": "UP = Prometheus can reach the app right now. This strip always shows every app, whatever you choose in the App picker. postgres = the database itself accepts connections (pg_up).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "up{job=~\"nextjs|express|gateway|todo-service\"}",
+          "legendFormat": "{{job}}",
+          "instant": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "pg_up",
+          "legendFormat": "postgres",
+          "instant": false,
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "green",
+                  "index": 0
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "DOWN"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active users (last 5m, from logs)",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant",
+          "expr": "count(sum by (user_id) (count_over_time({app=~\"$app\"} | json | user_id != \"\" [5m])))"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Requests / sec (now)",
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app) (rate(http_requests_total{app=~\"$app\"}[30s]))",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Error rate 5xx (now)",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app) (rate(http_requests_total{status=~\"5..\",app=~\"$app\"}[30s]))",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Todos created (total)",
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app) (todo_operations_total{op=\"create\",app=~\"$app\"})",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Request rate by app",
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app) (rate(http_requests_total{app=~\"$app\"}[30s]))",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency p95 / p50 by app",
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, app) (rate(http_request_duration_seconds_bucket{app=~\"$app\"}[30s])))",
+          "legendFormat": "p95 {{app}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le, app) (rate(http_request_duration_seconds_bucket{app=~\"$app\"}[30s])))",
+          "legendFormat": "p50 {{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Responses by status code",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app, status) (rate(http_requests_total{app=~\"$app\"}[30s]))",
+          "legendFormat": "{{app}} {{status}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "User actions (CRUD ops / sec)",
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (app, op) (rate(todo_operations_total{app=~\"$app\"}[30s]))",
+          "legendFormat": "{{app}} {{op}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Memory (RSS)",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "process_resident_memory_bytes{app=~\"$app\"}",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Log volume by level",
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (app, level) (count_over_time({app=~\"$app\"}[10s]))",
+          "legendFormat": "{{app}} {{level}}"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      }
+    },
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "Warnings & errors",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{app=~\"$app\", level=~\"warn|error\"}"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 12,
+      "type": "logs",
+      "title": "All logs (live)",
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{app=~\"$app\"}"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": false,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Gateway: failed calls to services",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (upstream, code) (rate(gateway_upstream_errors_total[1m]))",
+          "legendFormat": "{{upstream}} {{code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "description": "Only the gateway reports this: calls it made to auth-service / todo-service / frontend that failed. Empty = healthy."
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Gateway: requests turned away at the door",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (reason) (rate(gateway_auth_rejections_total[1m]))",
+          "legendFormat": "{{reason}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "description": "Requests the gateway rejected for a missing or invalid login token."
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "app",
+        "label": "App",
+        "type": "custom",
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "query": "nextjs,express,gateway,todo-service",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "nextjs",
+            "value": "nextjs"
+          },
+          {
+            "selected": false,
+            "text": "express",
+            "value": "express"
+          },
+          {
+            "selected": false,
+            "text": "gateway",
+            "value": "gateway"
+          },
+          {
+            "selected": false,
+            "text": "todo-service",
+            "value": "todo-service"
+          }
+        ],
+        "description": "Choose which app(s) the charts and logs below show. The UP/DOWN strip at the top always shows every app."
+      }
+    ]
+  }
+}

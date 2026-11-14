@@ -1,0 +1,17 @@
+{
+  "name": "node-app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --env-file-if-exists=.env --watch src/server.js"
+  },
+  "dependencies": {
+    "ejs": "^7.0.2",
+    "express": "^4.21.0",
+    "jose": "^6.2.17",
+    "pg": "^8.23.1",
+    "prom-client": "^15.1.3"
+  }
+}

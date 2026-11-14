@@ -1,0 +1,87 @@
+# Full stack: Postgres + todo-service + gateway + frontend. Sign-in comes from the central AuthHub (run it separately, :4500).
+# Only the gateway is reachable from outside (http://localhost:8080). Everything else lives on a private network.
+#
+#   cp .env.example .env     (then change the secrets)
+#   docker compose up --build
+name: microservices-app
+
+x-service-env: &service-env
+  NODE_ENV: production
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
+  LOKI_URL: ${LOKI_URL:-}
+  POSTHOG_KEY: ${POSTHOG_KEY:-}
+  POSTHOG_HOST: ${POSTHOG_HOST:-https://us.i.posthog.com}
+  MIXPANEL_TOKEN: ${MIXPANEL_TOKEN:-}
+  MIXPANEL_HOST: ${MIXPANEL_HOST:-https://api.mixpanel.com}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: postgres
+    ports: ["127.0.0.1:5433:5432"]   # localhost only, for local development and debugging
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+
+  todo-service:
+    build: ./todo-service
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      PORT: 4002
+      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD:-app}@postgres:5432/tododb
+    ports: ["127.0.0.1:4002:4002"]   # localhost only, for Prometheus
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [backend]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        GATEWAY_URL: http://gateway:8080
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    networks: [backend]
+
+  gateway:
+    build: ./gateway
+    restart: unless-stopped
+    environment:
+      <<: *service-env
+      PORT: 8080
+      # Sign-in is done ONLY by the central AuthHub (this app has no login service of its own).
+      # AUTHHUB_URL is how the BROWSER reaches AuthHub; AUTHHUB_INTERNAL_URL is how this container does.
+      AUTHHUB_URL: ${AUTHHUB_URL:-http://localhost:4500}
+      AUTHHUB_INTERNAL_URL: ${AUTHHUB_INTERNAL_URL:-http://host.docker.internal:4500}
+      AUTHHUB_APP: ${AUTHHUB_APP:-microservices}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+      TODO_SERVICE_URL: http://todo-service:4002
+      FRONTEND_URL: http://frontend:3000
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    ports:
+      - "8080:8080"                 # the only public port
+      - "127.0.0.1:9100:9100"       # gateway metrics, localhost only, for Prometheus
+    extra_hosts: ["host.docker.internal:host-gateway"]   # lets the gateway reach AuthHub running on your machine (Linux)
+    depends_on:
+      todo-service: { condition: service_healthy }
+      frontend: { condition: service_started }
+    networks: [backend]
+
+networks:
+  backend:
+
+volumes:
+  pgdata:

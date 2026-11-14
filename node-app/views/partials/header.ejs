@@ -1,0 +1,14 @@
+<header class="top"><div class="in">
+  <a class="brand" href="/"><span class="logo">✓</span>Todos <span class="pill">Node.js · Express · EJS</span></a>
+  <nav class="links"><a href="/api/todos">API</a><a href="/api/health">Health</a><a href="/metrics">Metrics</a></nav>
+  <div class="who">
+    <% if (user) { %>
+      <div class="avatar"><%= (user.name || user.email || "?").trim().charAt(0).toUpperCase() %></div>
+      <div class="t"><b><%= user.name || user.email %></b><span><%= user.email %> · <%= user.appRole %></span></div>
+      <% if (user.hubRole === "admin") { %><a class="btn sm" href="<%= hubUrl %>">All my apps</a><% } %>
+      <a class="btn sm out" href="<%= logoutUrl %>">Sign out</a>
+    <% } else { %>
+      <span class="pill" title="Start with AUTH_REQUIRED=true to require the central login">Sign-in is off (local mode)</span>
+    <% } %>
+  </div>
+</div></header>

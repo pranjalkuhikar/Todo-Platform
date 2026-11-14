@@ -1,0 +1,30 @@
+# dependencies and build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+
+# secrets and local config: never commit
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# local data
+data/
+*.db
+*.sqlite
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# other projects that live next to these four (they have their own repos or are not part of this one)
+/load-tester/
+/test-lab/
+/test-hub/
+/central-tests/
+/load-test/

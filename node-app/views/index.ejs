@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Todos · Node.js</title>
+<%- include("partials/style") %></head><body>
+<%- include("partials/header") %>
+<main>
+  <h1>Your todos</h1>
+  <p class="sub">Server-rendered with EJS. Every click is a normal form post to the Express API's database.</p>
+
+  <% if (msg) { %><div class="flash ok"><%= msg %></div><% } %>
+  <% if (err) { %><div class="flash err"><%= err %></div><% } %>
+
+  <div class="stats">
+    <div class="stat"><b><%= counts.all %></b><span>total</span></div>
+    <div class="stat"><b><%= counts.open %></b><span>to do</span></div>
+    <div class="stat"><b><%= counts.done %></b><span>done</span></div>
+  </div>
+
+  <form class="card add" method="post" action="/todos">
+    <input type="text" name="title" placeholder="What needs doing?" maxlength="200" required autofocus>
+    <input type="hidden" name="filter" value="<%= filter %>">
+    <button class="btn primary">Add todo</button>
+  </form>
+
+  <nav class="tabs">
+    <% [["all","All"],["open","To do"],["done","Done"]].forEach(([k,l]) => { %><a class="<%= filter===k ? "on" : "" %>" href="/?filter=<%= k %>"><%= l %></a><% }) %>
+  </nav>
+
+  <div class="card">
+    <% if (!todos.length) { %>
+      <div class="empty"><b>Nothing here</b><%= filter === "done" ? "Finish something and it shows up here." : "Add your first todo above." %></div>
+    <% } else { %>
+    <ul class="list">
+      <% todos.forEach((t) => { %>
+      <li class="item <%= t.done ? "done" : "" %>">
+        <form method="post" action="/todos/<%= t.id %>/toggle"><input type="hidden" name="filter" value="<%= filter %>">
+          <button class="check" title="<%= t.done ? "Mark as to do" : "Mark as done" %>"><%= t.done ? "✓" : "" %></button></form>
+        <div class="title"><%= t.title %><div class="meta">#<%= t.id %> · <%= new Date(t.created_at).toLocaleString("en-GB") %><% if (t.user_id && t.user_id !== "anonymous") { %> · <%= t.user_id.length > 16 ? t.user_id.slice(0,8) + "…" : t.user_id %><% } %></div>
+          <details class="edit" id="e<%= t.id %>"><summary class="small">Rename</summary>
+            <form method="post" action="/todos/<%= t.id %>/edit"><input type="hidden" name="filter" value="<%= filter %>">
+              <input type="text" name="title" value="<%= t.title %>" maxlength="200" required><button class="btn sm primary">Save</button></form></details></div>
+        <div class="row-actions">
+          <form method="post" action="/todos/<%= t.id %>/delete" onsubmit="return confirm('Delete this todo?')"><input type="hidden" name="filter" value="<%= filter %>"><button class="btn sm out">Delete</button></form>
+        </div>
+      </li>
+      <% }) %>
+    </ul>
+    <% } %>
+  </div>
+
+  <% if (pages > 1) { %>
+  <div class="pager">
+    <% if (page > 1) { %><a class="btn sm" href="/?filter=<%= filter %>&page=<%= page - 1 %>">← Newer</a><% } else { %><span></span><% } %>
+    <span>Page <%= page %> of <%= pages %></span>
+    <% if (page < pages) { %><a class="btn sm" href="/?filter=<%= filter %>&page=<%= page + 1 %>">Older →</a><% } else { %><span></span><% } %>
+  </div>
+  <% } %>
+  <p class="foot">Node.js + Express + EJS + Postgres · JSON API at <a href="/api/todos">/api/todos</a></p>
+</main></body></html>

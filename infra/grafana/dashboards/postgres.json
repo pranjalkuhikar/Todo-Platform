@@ -1,0 +1,300 @@
+{
+ "uid": "pg-lab",
+ "title": "Postgres",
+ "tags": [
+  "postgres"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 39,
+ "refresh": "10s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Postgres up",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 4,
+    "h": 4
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "pg_up"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 2,
+   "type": "stat",
+   "title": "Active connections",
+   "gridPos": {
+    "x": 4,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(pg_stat_activity_count{state=\"active\"})"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 3,
+   "type": "stat",
+   "title": "nextapp: total todos",
+   "gridPos": {
+    "x": 9,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "uid": "pg-nextapp"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "rawQuery": true,
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "select count(*) as todos from todos"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 4,
+   "type": "stat",
+   "title": "nextapp: done",
+   "gridPos": {
+    "x": 14,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "uid": "pg-nextapp"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "rawQuery": true,
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "select count(*) filter (where done) as done from todos"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 5,
+   "type": "stat",
+   "title": "nextapp DB size",
+   "gridPos": {
+    "x": 19,
+    "y": 0,
+    "w": 5,
+    "h": 4
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "pg_database_size_bytes{datname=\"nextapp\"}"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 6,
+   "type": "timeseries",
+   "title": "Transactions / sec",
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(pg_stat_database_xact_commit{datname=~\"nextapp|nodeapp\"}[1m])",
+     "legendFormat": "commit {{datname}}"
+    },
+    {
+     "refId": "B",
+     "expr": "rate(pg_stat_database_xact_rollback{datname=~\"nextapp|nodeapp\"}[1m])",
+     "legendFormat": "rollback {{datname}}"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 7,
+   "type": "timeseries",
+   "title": "Rows inserted / updated / deleted per sec",
+   "gridPos": {
+    "x": 12,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(pg_stat_database_tup_inserted{datname=~\"nextapp|nodeapp\"}[1m])",
+     "legendFormat": "insert {{datname}}"
+    },
+    {
+     "refId": "B",
+     "expr": "rate(pg_stat_database_tup_updated{datname=~\"nextapp|nodeapp\"}[1m])",
+     "legendFormat": "update {{datname}}"
+    },
+    {
+     "refId": "C",
+     "expr": "rate(pg_stat_database_tup_deleted{datname=~\"nextapp|nodeapp\"}[1m])",
+     "legendFormat": "delete {{datname}}"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 8,
+   "type": "timeseries",
+   "title": "Connections by state",
+   "gridPos": {
+    "x": 0,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (state) (pg_stat_activity_count)",
+     "legendFormat": "{{state}}"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "Todos created per minute (nextapp)",
+   "gridPos": {
+    "x": 12,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "uid": "pg-nextapp"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "rawQuery": true,
+     "editorMode": "code",
+     "format": "time_series",
+     "rawSql": "select $__timeGroupAlias(created_at,1m), count(*) as created from todos where $__timeFilter(created_at) group by 1 order by 1"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 10,
+   "type": "table",
+   "title": "Latest todos (nextapp)",
+   "gridPos": {
+    "x": 0,
+    "y": 20,
+    "w": 24,
+    "h": 9
+   },
+   "datasource": {
+    "uid": "pg-nextapp"
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "rawQuery": true,
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "select id, title, done, user_id, created_at from todos order by id desc limit 50"
+    }
+   ]
+  }
+ ]
+}
